@@ -1,0 +1,51 @@
+- hosts: localhost 
+  tasks:
+  - yum_repository:
+          baseurl: "https://download.docker.com/linux/centos/8/x86_64/stable/"
+          name: "docker_repo"
+          description: "yum repo for docker"
+          gpgcheck: no 
+
+  - name: "install docker"
+    command: dnf install docker-ce --nobest -y
+
+  - name: "start docker service"
+    service:
+          name: "docker"
+          state: started
+          enabled: yes
+
+
+  - name: "install python software"
+    package:
+          name: python36
+          state: present
+
+  - name: "installation of python library"
+    pip:
+          name: "docker"
+          state: present 
+
+  - name: "pull docker_image"
+    docker_image:
+          name: httpd
+          source: pull
+
+  - name: " creating httpd container "
+    docker_container:
+          name: webserver
+          image: httpd
+          state: present
+          published_ports:
+          - "8080:80"
+          volumes: /var/www/html:/usr/local/apache2/htdocs/
+
+  - name: " copy webpages "
+    copy:
+          src: "/root/index.html"
+          dest: "/var/www/html"
+
+  - name: "start docker container"
+    docker_container:
+          name: webserver
+          state: started
